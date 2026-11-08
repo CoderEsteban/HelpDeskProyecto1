@@ -1,40 +1,152 @@
-﻿<!DOCTYPE html>
+﻿@{
+    var autenticado = Session["UsuarioId"] != null;
+    var rol = Session["Rol"] as string;
+    var nombre = Session["NombreUsuario"] as string;
+}
+
+<!DOCTYPE html>
+
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewBag.Title - Mi aplicación ASP.NET</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>
+        @ViewBag.Title - Help Desk
+    </title>
+
     @Styles.Render("~/Content/css")
     @Scripts.Render("~/bundles/modernizr")
 </head>
+
 <body>
-    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark">
+
+    <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+
         <div class="container">
-            @Html.ActionLink("Nombre de la aplicación", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
-            <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" title="Alternar navegación" aria-controls="navbarSupportedContent"
-                    aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse d-sm-inline-flex justify-content-between">
-                <ul class="navbar-nav flex-grow-1">
-                    <li>@Html.ActionLink("Inicio", "Index", "Home", new { area = "" }, new { @class = "nav-link" })</li>
-                    <li>@Html.ActionLink("Acerca de", "About", "Home", new { area = "" }, new { @class = "nav-link" })</li>
-                    <li>@Html.ActionLink("Contacto", "Contact", "Home", new { area = "" }, new { @class = "nav-link" })</li>
-                </ul>
+
+            @Html.ActionLink(
+                "Help Desk",
+                autenticado
+                    ? (rol == "Administrador"
+                        ? "Index"
+                        : "MisTickets")
+                    : "Login",
+
+                autenticado
+                    ? (rol == "Administrador"
+                        ? "Admin"
+                        : "Tickets")
+                    : "Account",
+
+                null,
+                new { @class = "navbar-brand" }
+            )
+
+
+            <div class="navbar-nav">
+
+                @if (!autenticado)
+                {
+                    @Html.ActionLink(
+                        "Iniciar sesión",
+                        "Login",
+                        "Account",
+                        null,
+                        new { @class = "nav-link" }
+                    )
+                }
+
+
+                @if (autenticado && rol == "Usuario")
+                {
+                    @Html.ActionLink(
+                        "Mis tickets",
+                        "MisTickets",
+                        "Tickets",
+                        null,
+                        new { @class = "nav-link" }
+                    )
+
+                    @Html.ActionLink(
+                        "Crear ticket",
+                        "Crear",
+                        "Tickets",
+                        null,
+                        new { @class = "nav-link" }
+                    )
+                }
+
+
+                @if (autenticado && rol == "Administrador")
+                {
+                    @Html.ActionLink(
+                        "Administración",
+                        "Index",
+                        "Admin",
+                        null,
+                        new { @class = "nav-link" }
+                    )
+
+                    @Html.ActionLink(
+                        "Reportes",
+                        "Reporte",
+                        "Admin",
+                        null,
+                        new { @class = "nav-link" }
+                    )
+                }
+
             </div>
+
+
+            @if (autenticado)
+            {
+                <div class="navbar-nav ms-auto">
+
+                    <span class="navbar-text me-3">
+                        @nombre
+                    </span>
+
+                    @Html.ActionLink(
+                        "Cerrar sesión",
+                        "Logout",
+                        "Account",
+                        null,
+                        new { @class = "nav-link" }
+                    )
+
+                </div>
+            }
+
         </div>
+
     </nav>
-    <div class="container body-content">
+
+
+    <div class="container body-content mt-4">
+
         @RenderBody()
+
         <hr />
+
         <footer>
-            <p>&copy; @DateTime.Now.Year - Mi aplicación ASP.NET</p>
+            <p>
+                &copy; @DateTime.Now.Year - Sistema Help Desk
+            </p>
         </footer>
+
     </div>
+
 
     @Scripts.Render("~/bundles/jquery")
     @Scripts.Render("~/bundles/bootstrap")
-    @RenderSection("scripts", required: false)
+
+    @RenderSection(
+        "scripts",
+        required: false
+    )
+
 </body>
 </html>
