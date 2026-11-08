@@ -1,0 +1,43 @@
+﻿@model IEnumerable<HelpDeskProyecto1.Models.Ticket>
+
+@{
+    ViewBag.Title = "Mis tickets";
+}
+
+<h2>Mis tickets</h2>
+
+<p>Consulte las solicitudes de soporte registradas.</p>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        No tiene tickets registrados.
+    </div>
+}
+else
+{
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Número</th>
+                <th>Título</th>
+                <th>Categoría</th>
+                <th>Estado</th>
+                <th>Fecha de creación</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var ticket in Model)
+            {
+                <tr>
+                    <td>#@ticket.Id</td>
+                    <td>@ticket.Titulo</td>
+                    <td>@ticket.Categoria</td>
+                    <td>@ticket.EstadoNombre</td>
+                    <td>@ticket.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

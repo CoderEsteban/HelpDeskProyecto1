@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using HelpDeskProyecto1.Models;
+using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
-using HelpDeskProyecto1.Models;
 
 namespace HelpDeskProyecto1.Data
 {
@@ -114,6 +115,143 @@ namespace HelpDeskProyecto1.Data
             }
 
             return null;
+        }
+
+        public int CrearTicket(Ticket ticket)
+        {
+            string sql = @"
+        INSERT INTO Tickets
+        (
+            Titulo,
+            Descripcion,
+            IdUsuarioSolicitante,
+            IdUsuarioAsignado,
+            IdEstado,
+            FechaCreacion,
+            FechaActualizacion,
+            Categoria
+        )
+        VALUES
+        (
+            @Titulo,
+            @Descripcion,
+            @IdUsuarioSolicitante,
+            NULL,
+            @IdEstado,
+            GETDATE(),
+            GETDATE(),
+            @Categoria
+        );
+
+        SELECT CAST(SCOPE_IDENTITY() AS INT);";
+
+            using (SqlConnection conexion =
+                   new SqlConnection(connectionString))
+            {
+                SqlCommand comando =
+                    new SqlCommand(sql, conexion);
+
+                comando.Parameters.AddWithValue(
+                    "@Titulo",
+                    ticket.Titulo
+                );
+
+                comando.Parameters.AddWithValue(
+                    "@Descripcion",
+                    ticket.Descripcion
+                );
+
+                comando.Parameters.AddWithValue(
+                    "@IdUsuarioSolicitante",
+                    ticket.IdUsuarioSolicitante
+                );
+
+                comando.Parameters.AddWithValue(
+                    "@IdEstado",
+                    ticket.IdEstado
+                );
+
+                comando.Parameters.AddWithValue(
+                    "@Categoria",
+                    ticket.Categoria
+                );
+
+                conexion.Open();
+
+                return (int)comando.ExecuteScalar();
+            }
+        }
+
+        public List<Ticket> ObtenerTicketsUsuario(int usuarioId)
+        {
+            List<Ticket> tickets = new List<Ticket>();
+
+            string sql = @"
+        SELECT
+            T.Id,
+            T.Titulo,
+            T.Descripcion,
+            T.IdUsuarioSolicitante,
+            T.IdUsuarioAsignado,
+            T.IdEstado,
+            T.FechaCreacion,
+            T.FechaActualizacion,
+            T.Categoria,
+            E.Nombre AS EstadoNombre
+        FROM Tickets T
+        INNER JOIN EstadosTicket E
+            ON T.IdEstado = E.Id
+        WHERE T.IdUsuarioSolicitante = @UsuarioId
+        ORDER BY T.FechaCreacion DESC";
+
+            using (SqlConnection conexion =
+                   new SqlConnection(connectionString))
+            {
+                SqlCommand comando =
+                    new SqlCommand(sql, conexion);
+
+                comando.Parameters.AddWithValue(
+                    "@UsuarioId",
+                    usuarioId
+                );
+
+                conexion.Open();
+
+                using (SqlDataReader lector =
+                       comando.ExecuteReader())
+                {
+                    while (lector.Read())
+                    {
+                        Ticket ticket = new Ticket
+                        {
+                            Id = (int)lector["Id"],
+                            Titulo = lector["Titulo"].ToString(),
+                            Descripcion = lector["Descripcion"].ToString(),
+                            IdUsuarioSolicitante =
+                                (int)lector["IdUsuarioSolicitante"],
+
+                            IdUsuarioAsignado =
+                                lector["IdUsuarioAsignado"] == DBNull.Value
+                                ? (int?)null
+                                : (int)lector["IdUsuarioAsignado"],
+
+                            IdEstado = (int)lector["IdEstado"],
+                            FechaCreacion =
+                                (DateTime)lector["FechaCreacion"],
+                            FechaActualizacion =
+                                (DateTime)lector["FechaActualizacion"],
+                            Categoria =
+                                lector["Categoria"].ToString(),
+                            EstadoNombre =
+                                lector["EstadoNombre"].ToString()
+                        };
+
+                        tickets.Add(ticket);
+                    }
+                }
+            }
+
+            return tickets;
         }
     }
 }

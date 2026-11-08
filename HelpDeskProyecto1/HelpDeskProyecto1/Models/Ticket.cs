@@ -21,5 +21,7 @@ namespace HelpDeskProyecto1.Models
         public DateTime FechaActualizacion { get; set; }
 
         public string Categoria { get; set; }
+
+        public string EstadoNombre { get; set; }
     }
 }
