@@ -65,5 +65,55 @@ namespace HelpDeskProyecto1.Data
 
             return usuarios;
         }
+
+        public Usuario ValidarUsuario(string email, string passwordHash)
+        {
+            string sql = @"
+        SELECT
+            Id,
+            Nombre,
+            Email,
+            PasswordHash,
+            Rol,
+            FechaRegistro,
+            Estado
+        FROM Usuarios
+        WHERE Email = @Email
+          AND PasswordHash = @PasswordHash
+          AND Estado = 1";
+
+            using (SqlConnection conexion =
+                   new SqlConnection(connectionString))
+            {
+                SqlCommand comando =
+                    new SqlCommand(sql, conexion);
+
+                comando.Parameters.AddWithValue("@Email", email);
+                comando.Parameters.AddWithValue("@PasswordHash", passwordHash);
+
+                conexion.Open();
+
+                using (SqlDataReader lector =
+                       comando.ExecuteReader())
+                {
+                    if (lector.Read())
+                    {
+                        return new Usuario
+                        {
+                            Id = (int)lector["Id"],
+                            Nombre = lector["Nombre"].ToString(),
+                            Email = lector["Email"].ToString(),
+                            PasswordHash = lector["PasswordHash"].ToString(),
+                            Rol = lector["Rol"].ToString(),
+                            FechaRegistro =
+                                (System.DateTime)lector["FechaRegistro"],
+                            Estado = (bool)lector["Estado"]
+                        };
+                    }
+                }
+            }
+
+            return null;
+        }
     }
 }
