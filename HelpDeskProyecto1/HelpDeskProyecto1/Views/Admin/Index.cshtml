@@ -1,28 +1,38 @@
-﻿@using HelpDeskProyecto1.Models
+﻿@using System.Collections.Generic
+@using HelpDeskProyecto1.Models
 @model IEnumerable<HelpDeskProyecto1.Models.Ticket>
 
 @{
     ViewBag.Title = "Administración";
 
-    var usuarios =
-        ViewBag.Usuarios as List<Usuario>;
+    var usuarios = ViewBag.Usuarios as List<Usuario>
+        ?? new List<Usuario>();
 
-    var estados =
-        ViewBag.Estados as List<EstadoTicket>;
+    var estados = ViewBag.Estados as List<EstadoTicket>
+        ?? new List<EstadoTicket>();
 }
 
 <h2>Administración de tickets</h2>
 
-<p>
-    Gestión y seguimiento de las solicitudes de soporte.
-</p>
+<p>Gestión y seguimiento de las solicitudes de soporte.</p>
 
 <form id="tokenForm">
     @Html.AntiForgeryToken()
 </form>
 
-<table class="table table-bordered table-striped">
+<div class="mb-3">
+    <label for="buscarTicket" class="form-label">
+        Buscar ticket
+    </label>
 
+    <input type="text"
+           id="buscarTicket"
+           class="form-control"
+           placeholder="Número, título o estado"
+           autocomplete="off" />
+</div>
+
+<table class="table table-bordered table-striped">
     <thead>
         <tr>
             <th>#</th>
@@ -35,81 +45,71 @@
         </tr>
     </thead>
 
-    <tbody>
+    <tbody id="tablaTickets">
 
         @foreach (var ticket in Model)
         {
             <tr>
+                <td>#@ticket.Id</td>
+                <td>@ticket.Titulo</td>
+                <td>@ticket.SolicitanteNombre</td>
+                <td>@ticket.Categoria</td>
 
                 <td>
-                    #@ticket.Id
-                </td>
-
-                <td>
-                    @ticket.Titulo
-                </td>
-
-                <td>
-                    @ticket.SolicitanteNombre
-                </td>
-
-                <td>
-                    @ticket.Categoria
-                </td>
-
-                <td>
-
                     <select class="form-select asignar-ticket"
                             data-ticket="@ticket.Id">
 
-                        <option value="">
-                            Sin asignar
-                        </option>
+                        <option value="">Sin asignar</option>
 
                         @foreach (var usuario in usuarios)
                         {
-                            <option value="@usuario.Id"
-                                    @(ticket.IdUsuarioAsignado == usuario.Id ? "selected" : "")>
-
-                                @usuario.Nombre
-
-                            </option>
+                            if (ticket.IdUsuarioAsignado == usuario.Id)
+                            {
+                                <option value="@usuario.Id" selected>
+                                    @usuario.Nombre
+                                </option>
+                            }
+                            else
+                            {
+                                <option value="@usuario.Id">
+                                    @usuario.Nombre
+                                </option>
+                            }
                         }
 
                     </select>
-
                 </td>
 
                 <td>
-
                     <select class="form-select cambiar-estado"
                             data-ticket="@ticket.Id">
 
                         @foreach (var estado in estados)
                         {
-                            <option value="@estado.Id"
-                                    @(ticket.IdEstado == estado.Id ? "selected" : "")>
-
-                                @estado.Nombre
-
-                            </option>
+                            if (ticket.IdEstado == estado.Id)
+                            {
+                                <option value="@estado.Id" selected>
+                                    @estado.Nombre
+                                </option>
+                            }
+                            else
+                            {
+                                <option value="@estado.Id">
+                                    @estado.Nombre
+                                </option>
+                            }
                         }
 
                     </select>
-
                 </td>
 
                 <td>
-                    @ticket.FechaCreacion.ToString(
-                        "dd/MM/yyyy HH:mm"
-                    )
+                    @ticket.FechaCreacion.ToString("dd/MM/yyyy HH:mm")
                 </td>
-
             </tr>
         }
 
     </tbody>
-
 </table>
 
 <div id="mensajeAdmin"></div>
@@ -118,86 +118,229 @@
 
     <script>
 
-    function token() {
-        return $('#tokenForm input[name="__RequestVerificationToken"]').val();
-    }
+var urlBuscar = '@Url.Action("Buscar", "Admin")';
+var urlAsignar = '@Url.Action("Asignar", "Admin")';
+var urlEstado = '@Url.Action("CambiarEstado", "Admin")';
+var timerBusqueda;
 
 
-    $(".asignar-ticket").change(function () {
+function token() {
+    return $('#tokenForm input[name="__RequestVerificationToken"]').val();
+}
+
+
+function escapar(valor) {
+    return $('<div>').text(valor || '').html();
+}
+
+
+function buscarTickets() {
+
+    $.get(
+        urlBuscar,
+        {
+            filtro: $('#buscarTicket').val()
+        },
+        function (respuesta) {
+
+            var html = '';
+
+            if (!respuesta ||
+                !respuesta.tickets ||
+                respuesta.tickets.length === 0) {
+
+                $('#tablaTickets').html(
+                    '<tr>' +
+                    '<td colspan="7" class="text-center">' +
+                    'No se encontraron tickets.' +
+                    '</td>' +
+                    '</tr>'
+                );
+
+                return;
+            }
+
+
+            $.each(respuesta.tickets, function (i, ticket) {
+
+                var usuariosHtml =
+                    '<option value="">Sin asignar</option>';
+
+
+                $.each(respuesta.usuarios, function (j, usuario) {
+
+                    var selected =
+                        ticket.IdUsuarioAsignado == usuario.Id
+                        ? ' selected'
+                        : '';
+
+                    usuariosHtml +=
+                        '<option value="' +
+                        usuario.Id +
+                        '"' +
+                        selected +
+                        '>' +
+                        escapar(usuario.Nombre) +
+                        '</option>';
+                });
+
+
+                var estadosHtml = '';
+
+
+                $.each(respuesta.estados, function (j, estado) {
+
+                    var selected =
+                        ticket.IdEstado == estado.Id
+                        ? ' selected'
+                        : '';
+
+                    estadosHtml +=
+                        '<option value="' +
+                        estado.Id +
+                        '"' +
+                        selected +
+                        '>' +
+                        escapar(estado.Nombre) +
+                        '</option>';
+                });
+
+
+                html +=
+                    '<tr>' +
+
+                    '<td>#' +
+                    ticket.Id +
+                    '</td>' +
+
+                    '<td>' +
+                    escapar(ticket.Titulo) +
+                    '</td>' +
+
+                    '<td>' +
+                    escapar(ticket.SolicitanteNombre) +
+                    '</td>' +
+
+                    '<td>' +
+                    escapar(ticket.Categoria) +
+                    '</td>' +
+
+                    '<td>' +
+                    '<select class="form-select asignar-ticket" ' +
+                    'data-ticket="' +
+                    ticket.Id +
+                    '">' +
+                    usuariosHtml +
+                    '</select>' +
+                    '</td>' +
+
+                    '<td>' +
+                    '<select class="form-select cambiar-estado" ' +
+                    'data-ticket="' +
+                    ticket.Id +
+                    '">' +
+                    estadosHtml +
+                    '</select>' +
+                    '</td>' +
+
+                    '<td>' +
+                    escapar(ticket.FechaCreacion) +
+                    '</td>' +
+
+                    '</tr>';
+            });
+
+
+            $('#tablaTickets').html(html);
+        }
+    );
+}
+
+
+$('#buscarTicket').on('input', function () {
+
+    clearTimeout(timerBusqueda);
+
+    timerBusqueda =
+        setTimeout(
+            buscarTickets,
+            300
+        );
+});
+
+
+$(document).on(
+    'change',
+    '.asignar-ticket',
+    function () {
 
         var ticketId =
-            $(this).data("ticket");
+            $(this).data('ticket');
 
         var usuarioId =
             $(this).val();
 
-        if (usuarioId === "") {
+        if (usuarioId === '') {
             return;
         }
 
-        $.ajax({
 
-            url: '@Url.Action("Asignar", "Admin")',
-
-            type: 'POST',
-
-            data: {
+        $.post(
+            urlAsignar,
+            {
                 __RequestVerificationToken: token(),
                 ticketId: ticketId,
                 usuarioId: usuarioId
             },
-
-            success: function (respuesta) {
+            function (respuesta) {
 
                 if (respuesta.ok) {
 
-                    $("#mensajeAdmin").html(
+                    $('#mensajeAdmin').html(
                         '<div class="alert alert-success">' +
                         'Ticket asignado correctamente.' +
                         '</div>'
                     );
                 }
             }
-        });
-    });
+        );
+    }
+);
 
 
-    $(".cambiar-estado").change(function () {
+$(document).on(
+    'change',
+    '.cambiar-estado',
+    function () {
 
         var ticketId =
-            $(this).data("ticket");
+            $(this).data('ticket');
 
         var estadoId =
             $(this).val();
 
-        $.ajax({
 
-            url: '@Url.Action(
-                "CambiarEstado",
-                "Admin"
-            )',
-
-            type: 'POST',
-
-            data: {
+        $.post(
+            urlEstado,
+            {
                 __RequestVerificationToken: token(),
                 ticketId: ticketId,
                 estadoId: estadoId
             },
-
-            success: function (respuesta) {
+            function (respuesta) {
 
                 if (respuesta.ok) {
 
-                    $("#mensajeAdmin").html(
+                    $('#mensajeAdmin').html(
                         '<div class="alert alert-success">' +
                         'Estado actualizado correctamente.' +
                         '</div>'
                     );
                 }
             }
-        });
-    });
+        );
+    }
+);
 
     </script>
 }

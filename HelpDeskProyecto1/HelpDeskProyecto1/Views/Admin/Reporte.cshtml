@@ -1,0 +1,293 @@
+﻿@using System
+@using System.Collections.Generic
+@using HelpDeskProyecto1.Models
+
+@model IEnumerable<HelpDeskProyecto1.Models.Ticket>
+
+@{
+    ViewBag.Title = "Reporte de tickets";
+
+    var estados =
+        ViewBag.Estados as List<EstadoTicket>
+        ?? new List<EstadoTicket>();
+
+    int? estadoSeleccionado =
+        ViewBag.EstadoId as int?;
+
+    DateTime? desde =
+        ViewBag.Desde as DateTime?;
+
+    DateTime? hasta =
+        ViewBag.Hasta as DateTime?;
+}
+
+<h2>Reporte de tickets</h2>
+
+<p>
+    Consulte los tickets por estado y período.
+</p>
+
+
+<form method="get"
+      action="@Url.Action("Reporte", "Admin")"
+      class="row g-3 mb-4">
+
+    <div class="col-md-4">
+
+        <label class="form-label">
+            Estado
+        </label>
+
+        <select name="estadoId"
+                class="form-select">
+
+            <option value="">
+                Todos los estados
+            </option>
+
+            @foreach (var estado in estados)
+            {
+                if (estadoSeleccionado == estado.Id)
+                {
+                    <option value="@estado.Id"
+                            selected>
+                        @estado.Nombre
+                    </option>
+                }
+                else
+                {
+                    <option value="@estado.Id">
+                        @estado.Nombre
+                    </option>
+                }
+            }
+
+        </select>
+
+    </div>
+
+
+    <div class="col-md-3">
+
+        <label class="form-label">
+            Desde
+        </label>
+
+        <input type="date"
+               name="desde"
+               class="form-control"
+               value="@(desde.HasValue
+                    ? desde.Value.ToString("yyyy-MM-dd")
+                    : "")" />
+
+    </div>
+
+
+    <div class="col-md-3">
+
+        <label class="form-label">
+            Hasta
+        </label>
+
+        <input type="date"
+               name="hasta"
+               class="form-control"
+               value="@(hasta.HasValue
+                    ? hasta.Value.ToString("yyyy-MM-dd")
+                    : "")" />
+
+    </div>
+
+
+    <div class="col-md-2 d-flex align-items-end">
+
+        <button type="submit"
+                class="btn btn-primary w-100">
+
+            Consultar
+
+        </button>
+
+    </div>
+
+</form>
+
+
+<div class="row mb-4">
+
+    <div class="col-md-2">
+
+        <div class="card">
+            <div class="card-body">
+
+                <strong>Total</strong>
+
+                <h3>
+                    @ViewBag.Total
+                </h3>
+
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="col-md-2">
+
+        <div class="card">
+            <div class="card-body">
+
+                <strong>Abiertos</strong>
+
+                <h3>
+                    @ViewBag.Abiertos
+                </h3>
+
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="col-md-2">
+
+        <div class="card">
+            <div class="card-body">
+
+                <strong>En proceso</strong>
+
+                <h3>
+                    @ViewBag.EnProceso
+                </h3>
+
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="col-md-2">
+
+        <div class="card">
+            <div class="card-body">
+
+                <strong>Resueltos</strong>
+
+                <h3>
+                    @ViewBag.Resueltos
+                </h3>
+
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="col-md-2">
+
+        <div class="card">
+            <div class="card-body">
+
+                <strong>Cerrados</strong>
+
+                <h3>
+                    @ViewBag.Cerrados
+                </h3>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        No existen tickets para los filtros seleccionados.
+    </div>
+}
+else
+{
+    <table class="table table-bordered table-striped">
+
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Título</th>
+                <th>Solicitante</th>
+                <th>Categoría</th>
+                <th>Asignado</th>
+                <th>Estado</th>
+                <th>Fecha</th>
+            </tr>
+        </thead>
+
+
+        <tbody>
+
+            @foreach (var ticket in Model)
+            {
+                <tr>
+
+                    <td>
+                        #@ticket.Id
+                    </td>
+
+                    <td>
+                        @ticket.Titulo
+                    </td>
+
+                    <td>
+                        @ticket.SolicitanteNombre
+                    </td>
+
+                    <td>
+                        @ticket.Categoria
+                    </td>
+
+                    <td>
+
+                        @if (string.IsNullOrWhiteSpace(
+                            ticket.AsignadoNombre))
+                        {
+                            <span>Sin asignar</span>
+                        }
+                        else
+                        {
+                            @ticket.AsignadoNombre
+                        }
+
+                    </td>
+
+                    <td>
+                        @ticket.EstadoNombre
+                    </td>
+
+                    <td>
+                        @ticket.FechaCreacion.ToString(
+                            "dd/MM/yyyy HH:mm"
+                        )
+                    </td>
+
+                </tr>
+            }
+
+        </tbody>
+
+    </table>
+}
+
+
+<p class="mt-3">
+
+    @Html.ActionLink(
+        "Volver a administración",
+        "Index",
+        "Admin",
+        null,
+        new { @class = "btn btn-secondary" }
+    )
+
+</p>

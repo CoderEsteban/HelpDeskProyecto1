@@ -595,5 +595,90 @@ namespace HelpDeskProyecto1.Data
                 return comando.ExecuteNonQuery() > 0;
             }
         }
+
+        public List<Ticket> BuscarTickets(string filtro)
+        {
+            List<Ticket> tickets = new List<Ticket>();
+
+            string sql = @"
+        SELECT
+            T.Id,
+            T.Titulo,
+            T.Descripcion,
+            T.IdUsuarioSolicitante,
+            T.IdUsuarioAsignado,
+            T.IdEstado,
+            T.FechaCreacion,
+            T.FechaActualizacion,
+            T.Categoria,
+            E.Nombre AS EstadoNombre,
+            US.Nombre AS SolicitanteNombre,
+            UA.Nombre AS AsignadoNombre
+        FROM Tickets T
+        INNER JOIN EstadosTicket E
+            ON T.IdEstado = E.Id
+        INNER JOIN Usuarios US
+            ON T.IdUsuarioSolicitante = US.Id
+        LEFT JOIN Usuarios UA
+            ON T.IdUsuarioAsignado = UA.Id
+        WHERE
+            CAST(T.Id AS NVARCHAR(20)) LIKE @Filtro
+            OR T.Titulo LIKE @Filtro
+            OR E.Nombre LIKE @Filtro
+        ORDER BY T.FechaCreacion DESC";
+
+            using (SqlConnection conexion =
+                   new SqlConnection(connectionString))
+            {
+                SqlCommand comando =
+                    new SqlCommand(sql, conexion);
+
+                comando.Parameters.AddWithValue(
+                    "@Filtro",
+                    "%" + (filtro ?? "").Trim() + "%"
+                );
+
+                conexion.Open();
+
+                using (SqlDataReader lector =
+                       comando.ExecuteReader())
+                {
+                    while (lector.Read())
+                    {
+                        tickets.Add(new Ticket
+                        {
+                            Id = (int)lector["Id"],
+                            Titulo = lector["Titulo"].ToString(),
+                            Descripcion = lector["Descripcion"].ToString(),
+                            IdUsuarioSolicitante =
+                                (int)lector["IdUsuarioSolicitante"],
+
+                            IdUsuarioAsignado =
+                                lector["IdUsuarioAsignado"] == DBNull.Value
+                                    ? (int?)null
+                                    : (int)lector["IdUsuarioAsignado"],
+
+                            IdEstado = (int)lector["IdEstado"],
+                            FechaCreacion =
+                                (DateTime)lector["FechaCreacion"],
+                            FechaActualizacion =
+                                (DateTime)lector["FechaActualizacion"],
+                            Categoria =
+                                lector["Categoria"].ToString(),
+                            EstadoNombre =
+                                lector["EstadoNombre"].ToString(),
+                            SolicitanteNombre =
+                                lector["SolicitanteNombre"].ToString(),
+                            AsignadoNombre =
+                                lector["AsignadoNombre"] == DBNull.Value
+                                    ? ""
+                                    : lector["AsignadoNombre"].ToString()
+                        });
+                    }
+                }
+            }
+
+            return tickets;
+        }
     }
 }
