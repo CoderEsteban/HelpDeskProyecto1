@@ -1,11 +1,203 @@
-﻿@{
+﻿@using HelpDeskProyecto1.Models
+@model IEnumerable<HelpDeskProyecto1.Models.Ticket>
+
+@{
     ViewBag.Title = "Administración";
+
+    var usuarios =
+        ViewBag.Usuarios as List<Usuario>;
+
+    var estados =
+        ViewBag.Estados as List<EstadoTicket>;
 }
 
-<h2>Panel de administración</h2>
+<h2>Administración de tickets</h2>
 
-<p>Acceso autorizado para usuarios con rol Administrador.</p>
+<p>
+    Gestión y seguimiento de las solicitudes de soporte.
+</p>
 
-<div class="alert alert-success">
-    El control de roles funciona correctamente.
-</div>
+<form id="tokenForm">
+    @Html.AntiForgeryToken()
+</form>
+
+<table class="table table-bordered table-striped">
+
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Título</th>
+            <th>Solicitante</th>
+            <th>Categoría</th>
+            <th>Asignado</th>
+            <th>Estado</th>
+            <th>Fecha</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+        @foreach (var ticket in Model)
+        {
+            <tr>
+
+                <td>
+                    #@ticket.Id
+                </td>
+
+                <td>
+                    @ticket.Titulo
+                </td>
+
+                <td>
+                    @ticket.SolicitanteNombre
+                </td>
+
+                <td>
+                    @ticket.Categoria
+                </td>
+
+                <td>
+
+                    <select class="form-select asignar-ticket"
+                            data-ticket="@ticket.Id">
+
+                        <option value="">
+                            Sin asignar
+                        </option>
+
+                        @foreach (var usuario in usuarios)
+                        {
+                            <option value="@usuario.Id"
+                                    @(ticket.IdUsuarioAsignado == usuario.Id ? "selected" : "")>
+
+                                @usuario.Nombre
+
+                            </option>
+                        }
+
+                    </select>
+
+                </td>
+
+                <td>
+
+                    <select class="form-select cambiar-estado"
+                            data-ticket="@ticket.Id">
+
+                        @foreach (var estado in estados)
+                        {
+                            <option value="@estado.Id"
+                                    @(ticket.IdEstado == estado.Id ? "selected" : "")>
+
+                                @estado.Nombre
+
+                            </option>
+                        }
+
+                    </select>
+
+                </td>
+
+                <td>
+                    @ticket.FechaCreacion.ToString(
+                        "dd/MM/yyyy HH:mm"
+                    )
+                </td>
+
+            </tr>
+        }
+
+    </tbody>
+
+</table>
+
+<div id="mensajeAdmin"></div>
+
+@section Scripts {
+
+    <script>
+
+    function token() {
+        return $('#tokenForm input[name="__RequestVerificationToken"]').val();
+    }
+
+
+    $(".asignar-ticket").change(function () {
+
+        var ticketId =
+            $(this).data("ticket");
+
+        var usuarioId =
+            $(this).val();
+
+        if (usuarioId === "") {
+            return;
+        }
+
+        $.ajax({
+
+            url: '@Url.Action("Asignar", "Admin")',
+
+            type: 'POST',
+
+            data: {
+                __RequestVerificationToken: token(),
+                ticketId: ticketId,
+                usuarioId: usuarioId
+            },
+
+            success: function (respuesta) {
+
+                if (respuesta.ok) {
+
+                    $("#mensajeAdmin").html(
+                        '<div class="alert alert-success">' +
+                        'Ticket asignado correctamente.' +
+                        '</div>'
+                    );
+                }
+            }
+        });
+    });
+
+
+    $(".cambiar-estado").change(function () {
+
+        var ticketId =
+            $(this).data("ticket");
+
+        var estadoId =
+            $(this).val();
+
+        $.ajax({
+
+            url: '@Url.Action(
+                "CambiarEstado",
+                "Admin"
+            )',
+
+            type: 'POST',
+
+            data: {
+                __RequestVerificationToken: token(),
+                ticketId: ticketId,
+                estadoId: estadoId
+            },
+
+            success: function (respuesta) {
+
+                if (respuesta.ok) {
+
+                    $("#mensajeAdmin").html(
+                        '<div class="alert alert-success">' +
+                        'Estado actualizado correctamente.' +
+                        '</div>'
+                    );
+                }
+            }
+        });
+    });
+
+    </script>
+}

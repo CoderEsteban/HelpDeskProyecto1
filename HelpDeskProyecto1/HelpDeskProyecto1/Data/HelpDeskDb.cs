@@ -418,5 +418,182 @@ namespace HelpDeskProyecto1.Data
                 comando.ExecuteNonQuery();
             }
         }
+
+        public List<Ticket> ObtenerTodosTickets()
+        {
+            List<Ticket> tickets = new List<Ticket>();
+
+            string sql = @"
+        SELECT
+            T.Id,
+            T.Titulo,
+            T.Descripcion,
+            T.IdUsuarioSolicitante,
+            T.IdUsuarioAsignado,
+            T.IdEstado,
+            T.FechaCreacion,
+            T.FechaActualizacion,
+            T.Categoria,
+            E.Nombre AS EstadoNombre,
+            US.Nombre AS SolicitanteNombre,
+            UA.Nombre AS AsignadoNombre
+        FROM Tickets T
+        INNER JOIN EstadosTicket E
+            ON T.IdEstado = E.Id
+        INNER JOIN Usuarios US
+            ON T.IdUsuarioSolicitante = US.Id
+        LEFT JOIN Usuarios UA
+            ON T.IdUsuarioAsignado = UA.Id
+        ORDER BY T.FechaCreacion DESC";
+
+            using (SqlConnection conexion =
+                   new SqlConnection(connectionString))
+            {
+                SqlCommand comando =
+                    new SqlCommand(sql, conexion);
+
+                conexion.Open();
+
+                using (SqlDataReader lector =
+                       comando.ExecuteReader())
+                {
+                    while (lector.Read())
+                    {
+                        tickets.Add(new Ticket
+                        {
+                            Id = (int)lector["Id"],
+                            Titulo = lector["Titulo"].ToString(),
+                            Descripcion = lector["Descripcion"].ToString(),
+                            IdUsuarioSolicitante =
+                                (int)lector["IdUsuarioSolicitante"],
+
+                            IdUsuarioAsignado =
+                                lector["IdUsuarioAsignado"] == DBNull.Value
+                                    ? (int?)null
+                                    : (int)lector["IdUsuarioAsignado"],
+
+                            IdEstado = (int)lector["IdEstado"],
+                            FechaCreacion =
+                                (DateTime)lector["FechaCreacion"],
+                            FechaActualizacion =
+                                (DateTime)lector["FechaActualizacion"],
+                            Categoria =
+                                lector["Categoria"].ToString(),
+                            EstadoNombre =
+                                lector["EstadoNombre"].ToString(),
+                            SolicitanteNombre =
+                                lector["SolicitanteNombre"].ToString(),
+                            AsignadoNombre =
+                                lector["AsignadoNombre"] == DBNull.Value
+                                    ? ""
+                                    : lector["AsignadoNombre"].ToString()
+                        });
+                    }
+                }
+            }
+
+            return tickets;
+        }
+
+        public List<EstadoTicket> ObtenerEstados()
+        {
+            List<EstadoTicket> estados =
+                new List<EstadoTicket>();
+
+            string sql = @"
+        SELECT Id, Nombre
+        FROM EstadosTicket
+        ORDER BY Id";
+
+            using (SqlConnection conexion =
+                   new SqlConnection(connectionString))
+            {
+                SqlCommand comando =
+                    new SqlCommand(sql, conexion);
+
+                conexion.Open();
+
+                using (SqlDataReader lector =
+                       comando.ExecuteReader())
+                {
+                    while (lector.Read())
+                    {
+                        estados.Add(new EstadoTicket
+                        {
+                            Id = (int)lector["Id"],
+                            Nombre = lector["Nombre"].ToString()
+                        });
+                    }
+                }
+            }
+
+            return estados;
+        }
+
+        public bool AsignarTicket(
+            int ticketId,
+            int usuarioId)
+        {
+            string sql = @"
+        UPDATE Tickets
+        SET
+            IdUsuarioAsignado = @UsuarioId,
+            FechaActualizacion = GETDATE()
+        WHERE Id = @TicketId";
+
+            using (SqlConnection conexion =
+                   new SqlConnection(connectionString))
+            {
+                SqlCommand comando =
+                    new SqlCommand(sql, conexion);
+
+                comando.Parameters.AddWithValue(
+                    "@TicketId",
+                    ticketId
+                );
+
+                comando.Parameters.AddWithValue(
+                    "@UsuarioId",
+                    usuarioId
+                );
+
+                conexion.Open();
+
+                return comando.ExecuteNonQuery() > 0;
+            }
+        }
+
+        public bool CambiarEstado(
+            int ticketId,
+            int estadoId)
+        {
+            string sql = @"
+        UPDATE Tickets
+        SET
+            IdEstado = @EstadoId,
+            FechaActualizacion = GETDATE()
+        WHERE Id = @TicketId";
+
+            using (SqlConnection conexion =
+                   new SqlConnection(connectionString))
+            {
+                SqlCommand comando =
+                    new SqlCommand(sql, conexion);
+
+                comando.Parameters.AddWithValue(
+                    "@TicketId",
+                    ticketId
+                );
+
+                comando.Parameters.AddWithValue(
+                    "@EstadoId",
+                    estadoId
+                );
+
+                conexion.Open();
+
+                return comando.ExecuteNonQuery() > 0;
+            }
+        }
     }
 }

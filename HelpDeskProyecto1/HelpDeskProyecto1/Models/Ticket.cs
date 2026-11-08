@@ -23,5 +23,8 @@ namespace HelpDeskProyecto1.Models
         public string Categoria { get; set; }
 
         public string EstadoNombre { get; set; }
+
+        public string SolicitanteNombre { get; set; }
+        public string AsignadoNombre { get; set; }
     }
 }
