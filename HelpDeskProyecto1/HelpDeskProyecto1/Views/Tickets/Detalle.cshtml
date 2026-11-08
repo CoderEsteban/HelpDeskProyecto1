@@ -1,0 +1,208 @@
+﻿@model HelpDeskProyecto1.Models.Ticket
+
+@{
+    ViewBag.Title = "Detalle del ticket";
+}
+
+<h2>Ticket #@Model.Id</h2>
+
+<div class="card mb-4">
+    <div class="card-body">
+
+        <h4>@Model.Titulo</h4>
+
+        <p>
+            <strong>Categoría:</strong>
+            @Model.Categoria
+        </p>
+
+        <p>
+            <strong>Estado:</strong>
+            @Model.EstadoNombre
+        </p>
+
+        <p>
+            <strong>Descripción:</strong><br />
+            @Model.Descripcion
+        </p>
+
+        <p>
+            <strong>Creado:</strong>
+            @Model.FechaCreacion.ToString(
+                "dd/MM/yyyy HH:mm"
+            )
+        </p>
+
+    </div>
+</div>
+
+<h3>Comentarios</h3>
+
+<div id="listaComentarios"
+     class="mb-3">
+    Cargando comentarios...
+</div>
+
+<hr />
+
+<h4>Agregar comentario</h4>
+
+<form id="formComentario">
+
+    @Html.AntiForgeryToken()
+
+    <div class="mb-3">
+
+        <textarea id="textoComentario"
+                  class="form-control"
+                  rows="3"
+                  placeholder="Escriba un comentario"></textarea>
+
+    </div>
+
+    <button type="submit"
+            class="btn btn-primary">
+
+        Agregar comentario
+
+    </button>
+
+</form>
+
+<div id="mensajeComentario"
+     class="mt-3">
+</div>
+
+@section Scripts {
+
+    <script>
+
+    $(document).ready(function () {
+
+        cargarComentarios();
+
+        $("#formComentario").submit(function (e) {
+
+            e.preventDefault();
+
+            var texto =
+                $("#textoComentario").val();
+
+            $.ajax({
+
+                url: '@Url.Action(
+                    "AgregarComentario",
+                    "Tickets"
+                )',
+
+                type: 'POST',
+
+                data: {
+                    __RequestVerificationToken:
+                        $('#formComentario input[name="__RequestVerificationToken"]').val(),
+
+                    idTicket: @Model.Id,
+
+                    texto: texto
+                },
+
+                success: function (respuesta) {
+
+                    if (respuesta.ok) {
+
+                        $("#textoComentario").val("");
+
+                        $("#mensajeComentario")
+                            .html(
+                                '<div class="alert alert-success">' +
+                                'Comentario agregado correctamente.' +
+                                '</div>'
+                            );
+
+                        cargarComentarios();
+                    }
+                    else {
+
+                        $("#mensajeComentario")
+                            .html(
+                                '<div class="alert alert-danger">' +
+                                respuesta.mensaje +
+                                '</div>'
+                            );
+                    }
+                }
+            });
+        });
+    });
+
+
+    function cargarComentarios() {
+
+        $.get(
+            '@Url.Action(
+                "ObtenerComentarios",
+                "Tickets"
+            )',
+
+            {
+                id: @Model.Id
+            },
+
+            function (comentarios) {
+
+                var html = '';
+
+                if (!comentarios ||
+                    comentarios.length === 0) {
+
+                    html =
+                        '<div class="alert alert-info">' +
+                        'Este ticket todavía no tiene comentarios.' +
+                        '</div>';
+                }
+                else {
+
+                    $.each(
+                        comentarios,
+                        function (i, comentario) {
+
+                            var nombre =
+                                $('<div>')
+                                    .text(
+                                        comentario.NombreUsuario
+                                    )
+                                    .html();
+
+                            var texto =
+                                $('<div>')
+                                    .text(
+                                        comentario.Texto
+                                    )
+                                    .html();
+
+                            html +=
+                                '<div class="card mb-2">' +
+                                '<div class="card-body">' +
+                                '<strong>' +
+                                nombre +
+                                '</strong>' +
+                                '<br />' +
+                                texto +
+                                '<br />' +
+                                '<small class="text-muted">' +
+                                comentario.Fecha +
+                                '</small>' +
+                                '</div>' +
+                                '</div>';
+                        }
+                    );
+                }
+
+                $("#listaComentarios")
+                    .html(html);
+            }
+        );
+    }
+
+    </script>
+}

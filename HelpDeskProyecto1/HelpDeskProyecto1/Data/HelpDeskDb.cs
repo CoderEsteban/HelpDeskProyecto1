@@ -253,5 +253,170 @@ namespace HelpDeskProyecto1.Data
 
             return tickets;
         }
+
+        public Ticket ObtenerTicketUsuario(int ticketId, int usuarioId)
+        {
+            string sql = @"
+        SELECT
+            T.Id,
+            T.Titulo,
+            T.Descripcion,
+            T.IdUsuarioSolicitante,
+            T.IdUsuarioAsignado,
+            T.IdEstado,
+            T.FechaCreacion,
+            T.FechaActualizacion,
+            T.Categoria,
+            E.Nombre AS EstadoNombre
+        FROM Tickets T
+        INNER JOIN EstadosTicket E
+            ON T.IdEstado = E.Id
+        WHERE T.Id = @TicketId
+          AND T.IdUsuarioSolicitante = @UsuarioId";
+
+            using (SqlConnection conexion =
+                   new SqlConnection(connectionString))
+            {
+                SqlCommand comando = new SqlCommand(sql, conexion);
+
+                comando.Parameters.AddWithValue("@TicketId", ticketId);
+                comando.Parameters.AddWithValue("@UsuarioId", usuarioId);
+
+                conexion.Open();
+
+                using (SqlDataReader lector = comando.ExecuteReader())
+                {
+                    if (lector.Read())
+                    {
+                        return new Ticket
+                        {
+                            Id = (int)lector["Id"],
+                            Titulo = lector["Titulo"].ToString(),
+                            Descripcion = lector["Descripcion"].ToString(),
+                            IdUsuarioSolicitante =
+                                (int)lector["IdUsuarioSolicitante"],
+
+                            IdUsuarioAsignado =
+                                lector["IdUsuarioAsignado"] == DBNull.Value
+                                ? (int?)null
+                                : (int)lector["IdUsuarioAsignado"],
+
+                            IdEstado = (int)lector["IdEstado"],
+                            FechaCreacion =
+                                (DateTime)lector["FechaCreacion"],
+                            FechaActualizacion =
+                                (DateTime)lector["FechaActualizacion"],
+                            Categoria =
+                                lector["Categoria"].ToString(),
+                            EstadoNombre =
+                                lector["EstadoNombre"].ToString()
+                        };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        public List<Comentario> ObtenerComentariosTicket(int ticketId)
+        {
+            List<Comentario> comentarios =
+                new List<Comentario>();
+
+            string sql = @"
+        SELECT
+            C.Id,
+            C.IdTicket,
+            C.IdUsuario,
+            C.Texto,
+            C.Fecha,
+            U.Nombre AS NombreUsuario
+        FROM Comentarios C
+        INNER JOIN Usuarios U
+            ON C.IdUsuario = U.Id
+        WHERE C.IdTicket = @TicketId
+        ORDER BY C.Fecha ASC";
+
+            using (SqlConnection conexion =
+                   new SqlConnection(connectionString))
+            {
+                SqlCommand comando =
+                    new SqlCommand(sql, conexion);
+
+                comando.Parameters.AddWithValue(
+                    "@TicketId",
+                    ticketId
+                );
+
+                conexion.Open();
+
+                using (SqlDataReader lector =
+                       comando.ExecuteReader())
+                {
+                    while (lector.Read())
+                    {
+                        comentarios.Add(
+                            new Comentario
+                            {
+                                Id = (int)lector["Id"],
+                                IdTicket = (int)lector["IdTicket"],
+                                IdUsuario = (int)lector["IdUsuario"],
+                                Texto = lector["Texto"].ToString(),
+                                Fecha = (DateTime)lector["Fecha"],
+                                NombreUsuario =
+                                    lector["NombreUsuario"].ToString()
+                            }
+                        );
+                    }
+                }
+            }
+
+            return comentarios;
+        }
+
+        public void AgregarComentario(Comentario comentario)
+        {
+            string sql = @"
+        INSERT INTO Comentarios
+        (
+            IdTicket,
+            IdUsuario,
+            Texto,
+            Fecha
+        )
+        VALUES
+        (
+            @IdTicket,
+            @IdUsuario,
+            @Texto,
+            GETDATE()
+        )";
+
+            using (SqlConnection conexion =
+                   new SqlConnection(connectionString))
+            {
+                SqlCommand comando =
+                    new SqlCommand(sql, conexion);
+
+                comando.Parameters.AddWithValue(
+                    "@IdTicket",
+                    comentario.IdTicket
+                );
+
+                comando.Parameters.AddWithValue(
+                    "@IdUsuario",
+                    comentario.IdUsuario
+                );
+
+                comando.Parameters.AddWithValue(
+                    "@Texto",
+                    comentario.Texto
+                );
+
+                conexion.Open();
+
+                comando.ExecuteNonQuery();
+            }
+        }
     }
 }
