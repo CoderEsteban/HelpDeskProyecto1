@@ -1,0 +1,134 @@
+﻿@{
+    ViewBag.Title = "Centro de Control";
+
+    int total = 0;
+    int abiertos = 0;
+    int enProceso = 0;
+    int finalizados = 0;
+
+    if (ViewBag.TotalTickets != null)
+    {
+        total = Convert.ToInt32(ViewBag.TotalTickets);
+    }
+
+    if (ViewBag.Abiertos != null)
+    {
+        abiertos = Convert.ToInt32(ViewBag.Abiertos);
+    }
+
+    if (ViewBag.EnProceso != null)
+    {
+        enProceso = Convert.ToInt32(ViewBag.EnProceso);
+    }
+
+    if (ViewBag.Finalizados != null)
+    {
+        finalizados = Convert.ToInt32(ViewBag.Finalizados);
+    }
+}
+
+<div class="text-center mb-5">
+
+    <h1 class="display-4">
+        Centro de Control Help Desk
+    </h1>
+
+    <p class="lead">
+        Administración, seguimiento y control de solicitudes de soporte.
+    </p>
+
+    <p>
+        Bienvenido,
+        <strong>@Session["NombreUsuario"]</strong>
+    </p>
+
+</div>
+
+<div class="row text-center mb-4">
+
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+
+                <h5>Total de tickets</h5>
+
+                <h2>
+                    @total
+                </h2>
+
+            </div>
+        </div>
+    </div>
+
+
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+
+                <h5>Abiertos</h5>
+
+                <h2>
+                    @abiertos
+                </h2>
+
+            </div>
+        </div>
+    </div>
+
+
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+
+                <h5>En proceso</h5>
+
+                <h2>
+                    @enProceso
+                </h2>
+
+            </div>
+        </div>
+    </div>
+
+
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+
+                <h5>Finalizados</h5>
+
+                <h2>
+                    @finalizados
+                </h2>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="text-center mt-4">
+
+    @Html.ActionLink(
+        "Administrar tickets",
+        "Index",
+        "Admin",
+        null,
+        new
+        {
+            @class = "btn btn-primary btn-lg me-2"
+        }
+    )
+
+    @Html.ActionLink(
+        "Consultar reportes",
+        "Reporte",
+        "Admin",
+        null,
+        new
+        {
+            @class = "btn btn-secondary btn-lg"
+        }
+    )
+
+</div>

@@ -1,8 +1,8 @@
-﻿using HelpDeskProyecto1.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
+using HelpDeskProyecto1.Models;
 
 namespace HelpDeskProyecto1.Data
 {
@@ -17,6 +17,7 @@ namespace HelpDeskProyecto1.Data
                 .ConnectionStrings["HelpDeskConnection"]
                 .ConnectionString;
         }
+
 
         public List<Usuario> ObtenerUsuarios()
         {
@@ -47,7 +48,7 @@ namespace HelpDeskProyecto1.Data
                 {
                     while (lector.Read())
                     {
-                        Usuario usuario = new Usuario
+                        usuarios.Add(new Usuario
                         {
                             Id = (int)lector["Id"],
                             Nombre = lector["Nombre"].ToString(),
@@ -55,11 +56,10 @@ namespace HelpDeskProyecto1.Data
                             PasswordHash = lector["PasswordHash"].ToString(),
                             Rol = lector["Rol"].ToString(),
                             FechaRegistro =
-                                (System.DateTime)lector["FechaRegistro"],
-                            Estado = (bool)lector["Estado"]
-                        };
-
-                        usuarios.Add(usuario);
+                                (DateTime)lector["FechaRegistro"],
+                            Estado =
+                                (bool)lector["Estado"]
+                        });
                     }
                 }
             }
@@ -67,21 +67,24 @@ namespace HelpDeskProyecto1.Data
             return usuarios;
         }
 
-        public Usuario ValidarUsuario(string email, string passwordHash)
+
+        public Usuario ValidarUsuario(
+            string email,
+            string passwordHash)
         {
             string sql = @"
-        SELECT
-            Id,
-            Nombre,
-            Email,
-            PasswordHash,
-            Rol,
-            FechaRegistro,
-            Estado
-        FROM Usuarios
-        WHERE Email = @Email
-          AND PasswordHash = @PasswordHash
-          AND Estado = 1";
+                SELECT
+                    Id,
+                    Nombre,
+                    Email,
+                    PasswordHash,
+                    Rol,
+                    FechaRegistro,
+                    Estado
+                FROM Usuarios
+                WHERE Email = @Email
+                  AND PasswordHash = @PasswordHash
+                  AND Estado = 1";
 
             using (SqlConnection conexion =
                    new SqlConnection(connectionString))
@@ -89,8 +92,15 @@ namespace HelpDeskProyecto1.Data
                 SqlCommand comando =
                     new SqlCommand(sql, conexion);
 
-                comando.Parameters.AddWithValue("@Email", email);
-                comando.Parameters.AddWithValue("@PasswordHash", passwordHash);
+                comando.Parameters.AddWithValue(
+                    "@Email",
+                    email
+                );
+
+                comando.Parameters.AddWithValue(
+                    "@PasswordHash",
+                    passwordHash
+                );
 
                 conexion.Open();
 
@@ -107,8 +117,9 @@ namespace HelpDeskProyecto1.Data
                             PasswordHash = lector["PasswordHash"].ToString(),
                             Rol = lector["Rol"].ToString(),
                             FechaRegistro =
-                                (System.DateTime)lector["FechaRegistro"],
-                            Estado = (bool)lector["Estado"]
+                                (DateTime)lector["FechaRegistro"],
+                            Estado =
+                                (bool)lector["Estado"]
                         };
                     }
                 }
@@ -117,33 +128,34 @@ namespace HelpDeskProyecto1.Data
             return null;
         }
 
+
         public int CrearTicket(Ticket ticket)
         {
             string sql = @"
-        INSERT INTO Tickets
-        (
-            Titulo,
-            Descripcion,
-            IdUsuarioSolicitante,
-            IdUsuarioAsignado,
-            IdEstado,
-            FechaCreacion,
-            FechaActualizacion,
-            Categoria
-        )
-        VALUES
-        (
-            @Titulo,
-            @Descripcion,
-            @IdUsuarioSolicitante,
-            NULL,
-            @IdEstado,
-            GETDATE(),
-            GETDATE(),
-            @Categoria
-        );
+                INSERT INTO Tickets
+                (
+                    Titulo,
+                    Descripcion,
+                    IdUsuarioSolicitante,
+                    IdUsuarioAsignado,
+                    IdEstado,
+                    FechaCreacion,
+                    FechaActualizacion,
+                    Categoria
+                )
+                VALUES
+                (
+                    @Titulo,
+                    @Descripcion,
+                    @IdUsuarioSolicitante,
+                    NULL,
+                    @IdEstado,
+                    GETDATE(),
+                    GETDATE(),
+                    @Categoria
+                );
 
-        SELECT CAST(SCOPE_IDENTITY() AS INT);";
+                SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
             using (SqlConnection conexion =
                    new SqlConnection(connectionString))
@@ -182,27 +194,30 @@ namespace HelpDeskProyecto1.Data
             }
         }
 
-        public List<Ticket> ObtenerTicketsUsuario(int usuarioId)
+
+        public List<Ticket> ObtenerTicketsUsuario(
+            int usuarioId)
         {
-            List<Ticket> tickets = new List<Ticket>();
+            List<Ticket> tickets =
+                new List<Ticket>();
 
             string sql = @"
-        SELECT
-            T.Id,
-            T.Titulo,
-            T.Descripcion,
-            T.IdUsuarioSolicitante,
-            T.IdUsuarioAsignado,
-            T.IdEstado,
-            T.FechaCreacion,
-            T.FechaActualizacion,
-            T.Categoria,
-            E.Nombre AS EstadoNombre
-        FROM Tickets T
-        INNER JOIN EstadosTicket E
-            ON T.IdEstado = E.Id
-        WHERE T.IdUsuarioSolicitante = @UsuarioId
-        ORDER BY T.FechaCreacion DESC";
+                SELECT
+                    T.Id,
+                    T.Titulo,
+                    T.Descripcion,
+                    T.IdUsuarioSolicitante,
+                    T.IdUsuarioAsignado,
+                    T.IdEstado,
+                    T.FechaCreacion,
+                    T.FechaActualizacion,
+                    T.Categoria,
+                    E.Nombre AS EstadoNombre
+                FROM Tickets T
+                INNER JOIN EstadosTicket E
+                    ON T.IdEstado = E.Id
+                WHERE T.IdUsuarioSolicitante = @UsuarioId
+                ORDER BY T.FechaCreacion DESC";
 
             using (SqlConnection conexion =
                    new SqlConnection(connectionString))
@@ -222,31 +237,35 @@ namespace HelpDeskProyecto1.Data
                 {
                     while (lector.Read())
                     {
-                        Ticket ticket = new Ticket
+                        tickets.Add(new Ticket
                         {
                             Id = (int)lector["Id"],
                             Titulo = lector["Titulo"].ToString(),
                             Descripcion = lector["Descripcion"].ToString(),
+
                             IdUsuarioSolicitante =
                                 (int)lector["IdUsuarioSolicitante"],
 
                             IdUsuarioAsignado =
                                 lector["IdUsuarioAsignado"] == DBNull.Value
-                                ? (int?)null
-                                : (int)lector["IdUsuarioAsignado"],
+                                    ? (int?)null
+                                    : (int)lector["IdUsuarioAsignado"],
 
-                            IdEstado = (int)lector["IdEstado"],
+                            IdEstado =
+                                (int)lector["IdEstado"],
+
                             FechaCreacion =
                                 (DateTime)lector["FechaCreacion"],
+
                             FechaActualizacion =
                                 (DateTime)lector["FechaActualizacion"],
+
                             Categoria =
                                 lector["Categoria"].ToString(),
+
                             EstadoNombre =
                                 lector["EstadoNombre"].ToString()
-                        };
-
-                        tickets.Add(ticket);
+                        });
                     }
                 }
             }
@@ -254,37 +273,49 @@ namespace HelpDeskProyecto1.Data
             return tickets;
         }
 
-        public Ticket ObtenerTicketUsuario(int ticketId, int usuarioId)
+
+        public Ticket ObtenerTicketUsuario(
+            int ticketId,
+            int usuarioId)
         {
             string sql = @"
-        SELECT
-            T.Id,
-            T.Titulo,
-            T.Descripcion,
-            T.IdUsuarioSolicitante,
-            T.IdUsuarioAsignado,
-            T.IdEstado,
-            T.FechaCreacion,
-            T.FechaActualizacion,
-            T.Categoria,
-            E.Nombre AS EstadoNombre
-        FROM Tickets T
-        INNER JOIN EstadosTicket E
-            ON T.IdEstado = E.Id
-        WHERE T.Id = @TicketId
-          AND T.IdUsuarioSolicitante = @UsuarioId";
+                SELECT
+                    T.Id,
+                    T.Titulo,
+                    T.Descripcion,
+                    T.IdUsuarioSolicitante,
+                    T.IdUsuarioAsignado,
+                    T.IdEstado,
+                    T.FechaCreacion,
+                    T.FechaActualizacion,
+                    T.Categoria,
+                    E.Nombre AS EstadoNombre
+                FROM Tickets T
+                INNER JOIN EstadosTicket E
+                    ON T.IdEstado = E.Id
+                WHERE T.Id = @TicketId
+                  AND T.IdUsuarioSolicitante = @UsuarioId";
 
             using (SqlConnection conexion =
                    new SqlConnection(connectionString))
             {
-                SqlCommand comando = new SqlCommand(sql, conexion);
+                SqlCommand comando =
+                    new SqlCommand(sql, conexion);
 
-                comando.Parameters.AddWithValue("@TicketId", ticketId);
-                comando.Parameters.AddWithValue("@UsuarioId", usuarioId);
+                comando.Parameters.AddWithValue(
+                    "@TicketId",
+                    ticketId
+                );
+
+                comando.Parameters.AddWithValue(
+                    "@UsuarioId",
+                    usuarioId
+                );
 
                 conexion.Open();
 
-                using (SqlDataReader lector = comando.ExecuteReader())
+                using (SqlDataReader lector =
+                       comando.ExecuteReader())
                 {
                     if (lector.Read())
                     {
@@ -293,21 +324,27 @@ namespace HelpDeskProyecto1.Data
                             Id = (int)lector["Id"],
                             Titulo = lector["Titulo"].ToString(),
                             Descripcion = lector["Descripcion"].ToString(),
+
                             IdUsuarioSolicitante =
                                 (int)lector["IdUsuarioSolicitante"],
 
                             IdUsuarioAsignado =
                                 lector["IdUsuarioAsignado"] == DBNull.Value
-                                ? (int?)null
-                                : (int)lector["IdUsuarioAsignado"],
+                                    ? (int?)null
+                                    : (int)lector["IdUsuarioAsignado"],
 
-                            IdEstado = (int)lector["IdEstado"],
+                            IdEstado =
+                                (int)lector["IdEstado"],
+
                             FechaCreacion =
                                 (DateTime)lector["FechaCreacion"],
+
                             FechaActualizacion =
                                 (DateTime)lector["FechaActualizacion"],
+
                             Categoria =
                                 lector["Categoria"].ToString(),
+
                             EstadoNombre =
                                 lector["EstadoNombre"].ToString()
                         };
@@ -318,24 +355,26 @@ namespace HelpDeskProyecto1.Data
             return null;
         }
 
-        public List<Comentario> ObtenerComentariosTicket(int ticketId)
+
+        public List<Comentario> ObtenerComentariosTicket(
+            int ticketId)
         {
             List<Comentario> comentarios =
                 new List<Comentario>();
 
             string sql = @"
-        SELECT
-            C.Id,
-            C.IdTicket,
-            C.IdUsuario,
-            C.Texto,
-            C.Fecha,
-            U.Nombre AS NombreUsuario
-        FROM Comentarios C
-        INNER JOIN Usuarios U
-            ON C.IdUsuario = U.Id
-        WHERE C.IdTicket = @TicketId
-        ORDER BY C.Fecha ASC";
+                SELECT
+                    C.Id,
+                    C.IdTicket,
+                    C.IdUsuario,
+                    C.Texto,
+                    C.Fecha,
+                    U.Nombre AS NombreUsuario
+                FROM Comentarios C
+                INNER JOIN Usuarios U
+                    ON C.IdUsuario = U.Id
+                WHERE C.IdTicket = @TicketId
+                ORDER BY C.Fecha ASC";
 
             using (SqlConnection conexion =
                    new SqlConnection(connectionString))
@@ -359,10 +398,14 @@ namespace HelpDeskProyecto1.Data
                             new Comentario
                             {
                                 Id = (int)lector["Id"],
-                                IdTicket = (int)lector["IdTicket"],
-                                IdUsuario = (int)lector["IdUsuario"],
-                                Texto = lector["Texto"].ToString(),
-                                Fecha = (DateTime)lector["Fecha"],
+                                IdTicket =
+                                    (int)lector["IdTicket"],
+                                IdUsuario =
+                                    (int)lector["IdUsuario"],
+                                Texto =
+                                    lector["Texto"].ToString(),
+                                Fecha =
+                                    (DateTime)lector["Fecha"],
                                 NombreUsuario =
                                     lector["NombreUsuario"].ToString()
                             }
@@ -374,23 +417,25 @@ namespace HelpDeskProyecto1.Data
             return comentarios;
         }
 
-        public void AgregarComentario(Comentario comentario)
+
+        public void AgregarComentario(
+            Comentario comentario)
         {
             string sql = @"
-        INSERT INTO Comentarios
-        (
-            IdTicket,
-            IdUsuario,
-            Texto,
-            Fecha
-        )
-        VALUES
-        (
-            @IdTicket,
-            @IdUsuario,
-            @Texto,
-            GETDATE()
-        )";
+                INSERT INTO Comentarios
+                (
+                    IdTicket,
+                    IdUsuario,
+                    Texto,
+                    Fecha
+                )
+                VALUES
+                (
+                    @IdTicket,
+                    @IdUsuario,
+                    @Texto,
+                    GETDATE()
+                )";
 
             using (SqlConnection conexion =
                    new SqlConnection(connectionString))
@@ -419,32 +464,34 @@ namespace HelpDeskProyecto1.Data
             }
         }
 
+
         public List<Ticket> ObtenerTodosTickets()
         {
-            List<Ticket> tickets = new List<Ticket>();
+            List<Ticket> tickets =
+                new List<Ticket>();
 
             string sql = @"
-        SELECT
-            T.Id,
-            T.Titulo,
-            T.Descripcion,
-            T.IdUsuarioSolicitante,
-            T.IdUsuarioAsignado,
-            T.IdEstado,
-            T.FechaCreacion,
-            T.FechaActualizacion,
-            T.Categoria,
-            E.Nombre AS EstadoNombre,
-            US.Nombre AS SolicitanteNombre,
-            UA.Nombre AS AsignadoNombre
-        FROM Tickets T
-        INNER JOIN EstadosTicket E
-            ON T.IdEstado = E.Id
-        INNER JOIN Usuarios US
-            ON T.IdUsuarioSolicitante = US.Id
-        LEFT JOIN Usuarios UA
-            ON T.IdUsuarioAsignado = UA.Id
-        ORDER BY T.FechaCreacion DESC";
+                SELECT
+                    T.Id,
+                    T.Titulo,
+                    T.Descripcion,
+                    T.IdUsuarioSolicitante,
+                    T.IdUsuarioAsignado,
+                    T.IdEstado,
+                    T.FechaCreacion,
+                    T.FechaActualizacion,
+                    T.Categoria,
+                    E.Nombre AS EstadoNombre,
+                    US.Nombre AS SolicitanteNombre,
+                    UA.Nombre AS AsignadoNombre
+                FROM Tickets T
+                INNER JOIN EstadosTicket E
+                    ON T.IdEstado = E.Id
+                INNER JOIN Usuarios US
+                    ON T.IdUsuarioSolicitante = US.Id
+                LEFT JOIN Usuarios UA
+                    ON T.IdUsuarioAsignado = UA.Id
+                ORDER BY T.FechaCreacion DESC";
 
             using (SqlConnection conexion =
                    new SqlConnection(connectionString))
@@ -462,8 +509,11 @@ namespace HelpDeskProyecto1.Data
                         tickets.Add(new Ticket
                         {
                             Id = (int)lector["Id"],
-                            Titulo = lector["Titulo"].ToString(),
-                            Descripcion = lector["Descripcion"].ToString(),
+                            Titulo =
+                                lector["Titulo"].ToString(),
+                            Descripcion =
+                                lector["Descripcion"].ToString(),
+
                             IdUsuarioSolicitante =
                                 (int)lector["IdUsuarioSolicitante"],
 
@@ -472,17 +522,24 @@ namespace HelpDeskProyecto1.Data
                                     ? (int?)null
                                     : (int)lector["IdUsuarioAsignado"],
 
-                            IdEstado = (int)lector["IdEstado"],
+                            IdEstado =
+                                (int)lector["IdEstado"],
+
                             FechaCreacion =
                                 (DateTime)lector["FechaCreacion"],
+
                             FechaActualizacion =
                                 (DateTime)lector["FechaActualizacion"],
+
                             Categoria =
                                 lector["Categoria"].ToString(),
+
                             EstadoNombre =
                                 lector["EstadoNombre"].ToString(),
+
                             SolicitanteNombre =
                                 lector["SolicitanteNombre"].ToString(),
+
                             AsignadoNombre =
                                 lector["AsignadoNombre"] == DBNull.Value
                                     ? ""
@@ -495,15 +552,16 @@ namespace HelpDeskProyecto1.Data
             return tickets;
         }
 
+
         public List<EstadoTicket> ObtenerEstados()
         {
             List<EstadoTicket> estados =
                 new List<EstadoTicket>();
 
             string sql = @"
-        SELECT Id, Nombre
-        FROM EstadosTicket
-        ORDER BY Id";
+                SELECT Id, Nombre
+                FROM EstadosTicket
+                ORDER BY Id";
 
             using (SqlConnection conexion =
                    new SqlConnection(connectionString))
@@ -521,7 +579,8 @@ namespace HelpDeskProyecto1.Data
                         estados.Add(new EstadoTicket
                         {
                             Id = (int)lector["Id"],
-                            Nombre = lector["Nombre"].ToString()
+                            Nombre =
+                                lector["Nombre"].ToString()
                         });
                     }
                 }
@@ -530,16 +589,17 @@ namespace HelpDeskProyecto1.Data
             return estados;
         }
 
+
         public bool AsignarTicket(
             int ticketId,
             int usuarioId)
         {
             string sql = @"
-        UPDATE Tickets
-        SET
-            IdUsuarioAsignado = @UsuarioId,
-            FechaActualizacion = GETDATE()
-        WHERE Id = @TicketId";
+                UPDATE Tickets
+                SET
+                    IdUsuarioAsignado = @UsuarioId,
+                    FechaActualizacion = GETDATE()
+                WHERE Id = @TicketId";
 
             using (SqlConnection conexion =
                    new SqlConnection(connectionString))
@@ -563,16 +623,17 @@ namespace HelpDeskProyecto1.Data
             }
         }
 
+
         public bool CambiarEstado(
             int ticketId,
             int estadoId)
         {
             string sql = @"
-        UPDATE Tickets
-        SET
-            IdEstado = @EstadoId,
-            FechaActualizacion = GETDATE()
-        WHERE Id = @TicketId";
+                UPDATE Tickets
+                SET
+                    IdEstado = @EstadoId,
+                    FechaActualizacion = GETDATE()
+                WHERE Id = @TicketId";
 
             using (SqlConnection conexion =
                    new SqlConnection(connectionString))
@@ -596,89 +657,70 @@ namespace HelpDeskProyecto1.Data
             }
         }
 
-        public List<Ticket> BuscarTickets(string filtro)
+
+        public bool EliminarTicket(int ticketId)
         {
-            List<Ticket> tickets = new List<Ticket>();
-
-            string sql = @"
-        SELECT
-            T.Id,
-            T.Titulo,
-            T.Descripcion,
-            T.IdUsuarioSolicitante,
-            T.IdUsuarioAsignado,
-            T.IdEstado,
-            T.FechaCreacion,
-            T.FechaActualizacion,
-            T.Categoria,
-            E.Nombre AS EstadoNombre,
-            US.Nombre AS SolicitanteNombre,
-            UA.Nombre AS AsignadoNombre
-        FROM Tickets T
-        INNER JOIN EstadosTicket E
-            ON T.IdEstado = E.Id
-        INNER JOIN Usuarios US
-            ON T.IdUsuarioSolicitante = US.Id
-        LEFT JOIN Usuarios UA
-            ON T.IdUsuarioAsignado = UA.Id
-        WHERE
-            CAST(T.Id AS NVARCHAR(20)) LIKE @Filtro
-            OR T.Titulo LIKE @Filtro
-            OR E.Nombre LIKE @Filtro
-        ORDER BY T.FechaCreacion DESC";
-
             using (SqlConnection conexion =
                    new SqlConnection(connectionString))
             {
-                SqlCommand comando =
-                    new SqlCommand(sql, conexion);
-
-                comando.Parameters.AddWithValue(
-                    "@Filtro",
-                    "%" + (filtro ?? "").Trim() + "%"
-                );
-
                 conexion.Open();
 
-                using (SqlDataReader lector =
-                       comando.ExecuteReader())
+                SqlTransaction transaccion =
+                    conexion.BeginTransaction();
+
+                try
                 {
-                    while (lector.Read())
+                    string eliminarComentarios = @"
+                        DELETE FROM Comentarios
+                        WHERE IdTicket = @TicketId";
+
+                    using (SqlCommand comando =
+                           new SqlCommand(
+                               eliminarComentarios,
+                               conexion,
+                               transaccion))
                     {
-                        tickets.Add(new Ticket
-                        {
-                            Id = (int)lector["Id"],
-                            Titulo = lector["Titulo"].ToString(),
-                            Descripcion = lector["Descripcion"].ToString(),
-                            IdUsuarioSolicitante =
-                                (int)lector["IdUsuarioSolicitante"],
+                        comando.Parameters.AddWithValue(
+                            "@TicketId",
+                            ticketId
+                        );
 
-                            IdUsuarioAsignado =
-                                lector["IdUsuarioAsignado"] == DBNull.Value
-                                    ? (int?)null
-                                    : (int)lector["IdUsuarioAsignado"],
-
-                            IdEstado = (int)lector["IdEstado"],
-                            FechaCreacion =
-                                (DateTime)lector["FechaCreacion"],
-                            FechaActualizacion =
-                                (DateTime)lector["FechaActualizacion"],
-                            Categoria =
-                                lector["Categoria"].ToString(),
-                            EstadoNombre =
-                                lector["EstadoNombre"].ToString(),
-                            SolicitanteNombre =
-                                lector["SolicitanteNombre"].ToString(),
-                            AsignadoNombre =
-                                lector["AsignadoNombre"] == DBNull.Value
-                                    ? ""
-                                    : lector["AsignadoNombre"].ToString()
-                        });
+                        comando.ExecuteNonQuery();
                     }
+
+
+                    string eliminarTicket = @"
+                        DELETE FROM Tickets
+                        WHERE Id = @TicketId";
+
+                    int filas;
+
+                    using (SqlCommand comando =
+                           new SqlCommand(
+                               eliminarTicket,
+                               conexion,
+                               transaccion))
+                    {
+                        comando.Parameters.AddWithValue(
+                            "@TicketId",
+                            ticketId
+                        );
+
+                        filas =
+                            comando.ExecuteNonQuery();
+                    }
+
+
+                    transaccion.Commit();
+
+                    return filas > 0;
+                }
+                catch
+                {
+                    transaccion.Rollback();
+                    throw;
                 }
             }
-
-            return tickets;
         }
     }
 }

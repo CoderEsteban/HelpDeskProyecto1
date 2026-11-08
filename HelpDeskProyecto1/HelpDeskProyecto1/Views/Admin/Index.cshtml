@@ -1,27 +1,35 @@
 ﻿@using System.Collections.Generic
 @using HelpDeskProyecto1.Models
+
 @model IEnumerable<HelpDeskProyecto1.Models.Ticket>
 
 @{
-    ViewBag.Title = "Administración";
+    ViewBag.Title = "Administración de tickets";
 
-    var usuarios = ViewBag.Usuarios as List<Usuario>
+    var usuarios =
+        ViewBag.Usuarios as List<Usuario>
         ?? new List<Usuario>();
 
-    var estados = ViewBag.Estados as List<EstadoTicket>
+    var estados =
+        ViewBag.Estados as List<EstadoTicket>
         ?? new List<EstadoTicket>();
 }
 
 <h2>Administración de tickets</h2>
 
-<p>Gestión y seguimiento de las solicitudes de soporte.</p>
+<p>
+    Gestión, asignación y seguimiento de solicitudes de soporte.
+</p>
 
 <form id="tokenForm">
     @Html.AntiForgeryToken()
 </form>
 
+
 <div class="mb-3">
-    <label for="buscarTicket" class="form-label">
+
+    <label for="buscarTicket"
+           class="form-label">
         Buscar ticket
     </label>
 
@@ -30,9 +38,12 @@
            class="form-control"
            placeholder="Número, título o estado"
            autocomplete="off" />
+
 </div>
 
+
 <table class="table table-bordered table-striped">
+
     <thead>
         <tr>
             <th>#</th>
@@ -42,6 +53,7 @@
             <th>Asignado</th>
             <th>Estado</th>
             <th>Fecha</th>
+            <th>Acciones</th>
         </tr>
     </thead>
 
@@ -50,16 +62,31 @@
         @foreach (var ticket in Model)
         {
             <tr>
-                <td>#@ticket.Id</td>
-                <td>@ticket.Titulo</td>
-                <td>@ticket.SolicitanteNombre</td>
-                <td>@ticket.Categoria</td>
 
                 <td>
+                    #@ticket.Id
+                </td>
+
+                <td>
+                    @ticket.Titulo
+                </td>
+
+                <td>
+                    @ticket.SolicitanteNombre
+                </td>
+
+                <td>
+                    @ticket.Categoria
+                </td>
+
+                <td>
+
                     <select class="form-select asignar-ticket"
                             data-ticket="@ticket.Id">
 
-                        <option value="">Sin asignar</option>
+                        <option value="">
+                            Sin asignar
+                        </option>
 
                         @foreach (var usuario in usuarios)
                         {
@@ -78,9 +105,12 @@
                         }
 
                     </select>
+
                 </td>
 
+
                 <td>
+
                     <select class="form-select cambiar-estado"
                             data-ticket="@ticket.Id">
 
@@ -101,36 +131,68 @@
                         }
 
                     </select>
+
                 </td>
+
 
                 <td>
                     @ticket.FechaCreacion.ToString("dd/MM/yyyy HH:mm")
                 </td>
+
+
+                <td>
+
+                    <button type="button"
+                            class="btn btn-sm btn-danger eliminar-ticket"
+                            data-ticket="@ticket.Id">
+
+                        Eliminar
+
+                    </button>
+
+                </td>
+
             </tr>
         }
 
     </tbody>
+
 </table>
 
+
 <div id="mensajeAdmin"></div>
+
 
 @section Scripts {
 
     <script>
 
-var urlBuscar = '@Url.Action("Buscar", "Admin")';
-var urlAsignar = '@Url.Action("Asignar", "Admin")';
-var urlEstado = '@Url.Action("CambiarEstado", "Admin")';
+var urlBuscar =
+    '@Url.Action("Buscar", "Admin")';
+
+var urlAsignar =
+    '@Url.Action("Asignar", "Admin")';
+
+var urlEstado =
+    '@Url.Action("CambiarEstado", "Admin")';
+
+var urlEliminar =
+    '@Url.Action("Eliminar", "Admin")';
+
 var timerBusqueda;
 
 
 function token() {
+
     return $('#tokenForm input[name="__RequestVerificationToken"]').val();
 }
 
 
 function escapar(valor) {
-    return $('<div>').text(valor || '').html();
+
+    return $('<div>')
+        .text(valor || '')
+        .html();
 }
 
 
@@ -138,12 +200,16 @@ function buscarTickets() {
 
     $.get(
         urlBuscar,
+
         {
-            filtro: $('#buscarTicket').val()
+            filtro:
+                $('#buscarTicket').val()
         },
+
         function (respuesta) {
 
             var html = '';
+
 
             if (!respuesta ||
                 !respuesta.tickets ||
@@ -151,7 +217,7 @@ function buscarTickets() {
 
                 $('#tablaTickets').html(
                     '<tr>' +
-                    '<td colspan="7" class="text-center">' +
+                    '<td colspan="8" class="text-center">' +
                     'No se encontraron tickets.' +
                     '</td>' +
                     '</tr>'
@@ -161,94 +227,125 @@ function buscarTickets() {
             }
 
 
-            $.each(respuesta.tickets, function (i, ticket) {
+            $.each(
+                respuesta.tickets,
+                function (i, ticket) {
 
-                var usuariosHtml =
-                    '<option value="">Sin asignar</option>';
-
-
-                $.each(respuesta.usuarios, function (j, usuario) {
-
-                    var selected =
-                        ticket.IdUsuarioAsignado == usuario.Id
-                        ? ' selected'
-                        : '';
-
-                    usuariosHtml +=
-                        '<option value="' +
-                        usuario.Id +
-                        '"' +
-                        selected +
-                        '>' +
-                        escapar(usuario.Nombre) +
-                        '</option>';
-                });
+                    var usuariosHtml =
+                        '<option value="">Sin asignar</option>';
 
 
-                var estadosHtml = '';
+                    $.each(
+                        respuesta.usuarios,
+                        function (j, usuario) {
+
+                            var selected =
+                                ticket.IdUsuarioAsignado == usuario.Id
+                                ? ' selected'
+                                : '';
+
+                            usuariosHtml +=
+                                '<option value="' +
+                                usuario.Id +
+                                '"' +
+                                selected +
+                                '>' +
+                                escapar(usuario.Nombre) +
+                                '</option>';
+                        }
+                    );
 
 
-                $.each(respuesta.estados, function (j, estado) {
-
-                    var selected =
-                        ticket.IdEstado == estado.Id
-                        ? ' selected'
-                        : '';
-
-                    estadosHtml +=
-                        '<option value="' +
-                        estado.Id +
-                        '"' +
-                        selected +
-                        '>' +
-                        escapar(estado.Nombre) +
-                        '</option>';
-                });
+                    var estadosHtml = '';
 
 
-                html +=
-                    '<tr>' +
+                    $.each(
+                        respuesta.estados,
+                        function (j, estado) {
 
-                    '<td>#' +
-                    ticket.Id +
-                    '</td>' +
+                            var selected =
+                                ticket.IdEstado == estado.Id
+                                ? ' selected'
+                                : '';
 
-                    '<td>' +
-                    escapar(ticket.Titulo) +
-                    '</td>' +
+                            estadosHtml +=
+                                '<option value="' +
+                                estado.Id +
+                                '"' +
+                                selected +
+                                '>' +
+                                escapar(estado.Nombre) +
+                                '</option>';
+                        }
+                    );
 
-                    '<td>' +
-                    escapar(ticket.SolicitanteNombre) +
-                    '</td>' +
 
-                    '<td>' +
-                    escapar(ticket.Categoria) +
-                    '</td>' +
+                    html +=
+                        '<tr>' +
 
-                    '<td>' +
-                    '<select class="form-select asignar-ticket" ' +
-                    'data-ticket="' +
-                    ticket.Id +
-                    '">' +
-                    usuariosHtml +
-                    '</select>' +
-                    '</td>' +
+                        '<td>#' +
+                        ticket.Id +
+                        '</td>' +
 
-                    '<td>' +
-                    '<select class="form-select cambiar-estado" ' +
-                    'data-ticket="' +
-                    ticket.Id +
-                    '">' +
-                    estadosHtml +
-                    '</select>' +
-                    '</td>' +
+                        '<td>' +
+                        escapar(ticket.Titulo) +
+                        '</td>' +
 
-                    '<td>' +
-                    escapar(ticket.FechaCreacion) +
-                    '</td>' +
+                        '<td>' +
+                        escapar(ticket.SolicitanteNombre) +
+                        '</td>' +
 
-                    '</tr>';
-            });
+                        '<td>' +
+                        escapar(ticket.Categoria) +
+                        '</td>' +
+
+                        '<td>' +
+
+                        '<select class="form-select asignar-ticket" ' +
+                        'data-ticket="' +
+                        ticket.Id +
+                        '">' +
+
+                        usuariosHtml +
+
+                        '</select>' +
+
+                        '</td>' +
+
+                        '<td>' +
+
+                        '<select class="form-select cambiar-estado" ' +
+                        'data-ticket="' +
+                        ticket.Id +
+                        '">' +
+
+                        estadosHtml +
+
+                        '</select>' +
+
+                        '</td>' +
+
+                        '<td>' +
+                        escapar(ticket.FechaCreacion) +
+                        '</td>' +
+
+                        '<td>' +
+
+                        '<button type="button" ' +
+                        'class="btn btn-sm btn-danger eliminar-ticket" ' +
+                        'data-ticket="' +
+                        ticket.Id +
+                        '">' +
+
+                        'Eliminar' +
+
+                        '</button>' +
+
+                        '</td>' +
+
+                        '</tr>';
+                }
+            );
 
 
             $('#tablaTickets').html(html);
@@ -257,16 +354,19 @@ function buscarTickets() {
 }
 
 
-$('#buscarTicket').on('input', function () {
+$('#buscarTicket').on(
+    'input',
+    function () {
 
-    clearTimeout(timerBusqueda);
+        clearTimeout(timerBusqueda);
 
-    timerBusqueda =
-        setTimeout(
-            buscarTickets,
-            300
-        );
-});
+        timerBusqueda =
+            setTimeout(
+                buscarTickets,
+                300
+            );
+    }
+);
 
 
 $(document).on(
@@ -280,6 +380,7 @@ $(document).on(
         var usuarioId =
             $(this).val();
 
+
         if (usuarioId === '') {
             return;
         }
@@ -287,11 +388,18 @@ $(document).on(
 
         $.post(
             urlAsignar,
+
             {
-                __RequestVerificationToken: token(),
-                ticketId: ticketId,
-                usuarioId: usuarioId
+                __RequestVerificationToken:
+                    token(),
+
+                ticketId:
+                    ticketId,
+
+                usuarioId:
+                    usuarioId
             },
+
             function (respuesta) {
 
                 if (respuesta.ok) {
@@ -322,11 +430,18 @@ $(document).on(
 
         $.post(
             urlEstado,
+
             {
-                __RequestVerificationToken: token(),
-                ticketId: ticketId,
-                estadoId: estadoId
+                __RequestVerificationToken:
+                    token(),
+
+                ticketId:
+                    ticketId,
+
+                estadoId:
+                    estadoId
             },
+
             function (respuesta) {
 
                 if (respuesta.ok) {
@@ -342,5 +457,61 @@ $(document).on(
     }
 );
 
+
+$(document).on(
+    'click',
+    '.eliminar-ticket',
+    function () {
+
+        var ticketId =
+            $(this).data('ticket');
+
+
+        if (!confirm(
+            '¿Desea eliminar el ticket #' +
+            ticketId +
+            '?'
+        )) {
+            return;
+        }
+
+
+        $.post(
+            urlEliminar,
+
+            {
+                __RequestVerificationToken:
+                    token(),
+
+                ticketId:
+                    ticketId
+            },
+
+            function (respuesta) {
+
+                if (respuesta.ok) {
+
+                    $('#mensajeAdmin').html(
+                        '<div class="alert alert-success">' +
+                        'Ticket eliminado correctamente.' +
+                        '</div>'
+                    );
+
+                    buscarTickets();
+                }
+                else {
+
+                    $('#mensajeAdmin').html(
+                        '<div class="alert alert-danger">' +
+                        'No fue posible eliminar el ticket.' +
+                        '</div>'
+                    );
+                }
+            }
+        );
+    }
+);
+
     </script>
+
 }

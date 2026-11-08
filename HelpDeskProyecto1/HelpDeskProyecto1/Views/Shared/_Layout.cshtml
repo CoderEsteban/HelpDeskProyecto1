@@ -8,7 +8,9 @@
 
 <html>
 <head>
+
     <meta charset="utf-8" />
+
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0" />
 
@@ -17,7 +19,9 @@
     </title>
 
     @Styles.Render("~/Content/css")
+
     @Scripts.Render("~/bundles/modernizr")
+
 </head>
 
 <body>
@@ -26,23 +30,36 @@
 
         <div class="container">
 
-            @Html.ActionLink(
-                "Help Desk",
-                autenticado
-                    ? (rol == "Administrador"
-                        ? "Index"
-                        : "MisTickets")
-                    : "Login",
-
-                autenticado
-                    ? (rol == "Administrador"
-                        ? "Admin"
-                        : "Tickets")
-                    : "Account",
-
-                null,
-                new { @class = "navbar-brand" }
-            )
+            @if (!autenticado)
+            {
+                @Html.ActionLink(
+                    "Help Desk",
+                    "Login",
+                    "Account",
+                    null,
+                    new { @class = "navbar-brand" }
+                )
+            }
+            else if (rol == "Administrador")
+            {
+                @Html.ActionLink(
+                    "Help Desk",
+                    "Inicio",
+                    "Admin",
+                    null,
+                    new { @class = "navbar-brand" }
+                )
+            }
+            else
+            {
+                @Html.ActionLink(
+                    "Help Desk",
+                    "MisTickets",
+                    "Tickets",
+                    null,
+                    new { @class = "navbar-brand" }
+                )
+            }
 
 
             <div class="navbar-nav">
@@ -82,7 +99,15 @@
                 @if (autenticado && rol == "Administrador")
                 {
                     @Html.ActionLink(
-                        "Administración",
+                        "Inicio",
+                        "Inicio",
+                        "Admin",
+                        null,
+                        new { @class = "nav-link" }
+                    )
+
+                    @Html.ActionLink(
+                        "Administrar tickets",
                         "Index",
                         "Admin",
                         null,
@@ -132,15 +157,18 @@
         <hr />
 
         <footer>
+
             <p>
                 &copy; @DateTime.Now.Year - Sistema Help Desk
             </p>
+
         </footer>
 
     </div>
 
 
     @Scripts.Render("~/bundles/jquery")
+
     @Scripts.Render("~/bundles/bootstrap")
 
     @RenderSection(
@@ -149,4 +177,5 @@
     )
 
 </body>
+
 </html>

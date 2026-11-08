@@ -13,6 +13,7 @@ namespace HelpDeskProyecto1.Controllers
             return View();
         }
 
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Login(LoginViewModel model)
@@ -23,12 +24,18 @@ namespace HelpDeskProyecto1.Controllers
             }
 
             string passwordHash =
-                Seguridad.GenerarHashSHA256(model.Password);
+                Seguridad.GenerarHashSHA256(
+                    model.Password
+                );
 
-            HelpDeskDb db = new HelpDeskDb();
+            HelpDeskDb db =
+                new HelpDeskDb();
 
             Usuario usuario =
-                db.ValidarUsuario(model.Email, passwordHash);
+                db.ValidarUsuario(
+                    model.Email,
+                    passwordHash
+                );
 
             if (usuario == null)
             {
@@ -38,23 +45,42 @@ namespace HelpDeskProyecto1.Controllers
                 return View(model);
             }
 
-            Session["UsuarioId"] = usuario.Id;
-            Session["NombreUsuario"] = usuario.Nombre;
-            Session["Rol"] = usuario.Rol;
 
-            return RedirectToAction("Index", "Home");
+            Session["UsuarioId"] =
+                usuario.Id;
+
+            Session["NombreUsuario"] =
+                usuario.Nombre;
+
+            Session["Rol"] =
+                usuario.Rol;
+
+
+            if (usuario.Rol == "Administrador")
+            {
+                return RedirectToAction(
+                    "Inicio",
+                    "Admin"
+                );
+            }
+
+
+            return RedirectToAction(
+                "MisTickets",
+                "Tickets"
+            );
         }
+
 
         public ActionResult Logout()
         {
             Session.Clear();
             Session.Abandon();
 
-            return RedirectToAction("Login", "Account");
+            return RedirectToAction(
+                "Login",
+                "Account"
+            );
         }
-
-       
     }
-
-
 }

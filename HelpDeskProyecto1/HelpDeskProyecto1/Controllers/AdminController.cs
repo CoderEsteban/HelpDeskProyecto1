@@ -10,11 +10,44 @@ namespace HelpDeskProyecto1.Controllers
     public class AdminController : Controller
     {
         [HttpGet]
-        public ActionResult Index()
+        public ActionResult Inicio()
         {
             HelpDeskDb db = new HelpDeskDb();
 
             var tickets = db.ObtenerTodosTickets();
+
+            int total = tickets.Count;
+
+            int abiertos = tickets.Count(t =>
+                t.EstadoNombre == "Abierto");
+
+            int enProceso = tickets.Count(t =>
+                t.EstadoNombre == "En Proceso");
+
+            int resueltos = tickets.Count(t =>
+                t.EstadoNombre == "Resuelto");
+
+            int cerrados = tickets.Count(t =>
+                t.EstadoNombre == "Cerrado");
+
+            ViewBag.TotalTickets = total;
+            ViewBag.Abiertos = abiertos;
+            ViewBag.EnProceso = enProceso;
+            ViewBag.Resueltos = resueltos;
+            ViewBag.Cerrados = cerrados;
+            ViewBag.Finalizados = resueltos + cerrados;
+
+            return View();
+        }
+
+
+        [HttpGet]
+        public ActionResult Index()
+        {
+            HelpDeskDb db = new HelpDeskDb();
+
+            var tickets =
+                db.ObtenerTodosTickets();
 
             ViewBag.Usuarios =
                 db.ObtenerUsuarios()
@@ -35,30 +68,28 @@ namespace HelpDeskProyecto1.Controllers
         {
             HelpDeskDb db = new HelpDeskDb();
 
-            var tickets = db.ObtenerTodosTickets();
+            var tickets =
+                db.ObtenerTodosTickets();
 
             if (!string.IsNullOrWhiteSpace(filtro))
             {
                 string texto = filtro.Trim();
 
-                tickets = tickets
+                tickets =
+                    tickets
                     .Where(t =>
                         t.Id.ToString()
                             .IndexOf(
                                 texto,
                                 StringComparison.OrdinalIgnoreCase
                             ) >= 0
-
                         ||
-
                         (t.Titulo ?? "")
                             .IndexOf(
                                 texto,
                                 StringComparison.OrdinalIgnoreCase
                             ) >= 0
-
                         ||
-
                         (t.EstadoNombre ?? "")
                             .IndexOf(
                                 texto,
@@ -135,12 +166,10 @@ namespace HelpDeskProyecto1.Controllers
                     usuarioId
                 );
 
-            return Json(
-                new
-                {
-                    ok = resultado
-                }
-            );
+            return Json(new
+            {
+                ok = resultado
+            });
         }
 
 
@@ -158,12 +187,39 @@ namespace HelpDeskProyecto1.Controllers
                     estadoId
                 );
 
-            return Json(
-                new
+            return Json(new
+            {
+                ok = resultado
+            });
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult Eliminar(
+            int ticketId)
+        {
+            try
+            {
+                HelpDeskDb db = new HelpDeskDb();
+
+                bool resultado =
+                    db.EliminarTicket(ticketId);
+
+                return Json(new
                 {
                     ok = resultado
-                }
-            );
+                });
+            }
+            catch
+            {
+                return Json(new
+                {
+                    ok = false,
+                    mensaje =
+                        "No fue posible eliminar el ticket."
+                });
+            }
         }
 
 
